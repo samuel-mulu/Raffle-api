@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  phone        String   @unique
+  role         Role     @default(USER)
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tickets      Ticket[]
+  payments     Payment[]
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  LOCKED
+  DRAWN
+  COMPLETED
+  CANCELLED
+}
+
+model Campaign {
+  id           String         @id @default(cuid())
+  title        String
+  description  String?
+  imageUrl     String?
+  ticketPrice  Int
+  totalTickets Int
+  status       CampaignStatus @default(DRAFT)
+  drawAt       DateTime?
+  liveLinks    Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  tickets      Ticket[]
+  payments     Payment[]
+  winners      Winner[]
+}
+
+enum TicketStatus {
+  RESERVED
+  PAYMENT_PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  WINNER
+}
+
+model Ticket {
+  id            String       @id @default(cuid())
+  campaignId    String
+  userId        String?
+  ticketNumber  Int
+  status        TicketStatus @default(RESERVED)
+  reservedUntil DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+  payment  Payment?
+  winner   Winner?
+
+  @@unique([campaignId, ticketNumber])
+  @@index([campaignId, status])
+  @@index([userId])
+}
+
+model Winner {
+  id           String   @id @default(cuid())
+  campaignId   String
+  ticketId     String   @unique
+  prizeRank    Int
+  createdAt    DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  ticket   Ticket   @relation(fields: [ticketId], references: [id])
+
+  @@unique([campaignId, prizeRank])
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  campaignId    String
+  ticketId      String        @unique
+  userId        String
+  amount        Int
+  transactionId String?
+  proofUrl      String?
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  approvedAt    DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+  ticket   Ticket   @relation(fields: [ticketId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+}

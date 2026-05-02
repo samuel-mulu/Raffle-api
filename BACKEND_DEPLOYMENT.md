@@ -20,28 +20,24 @@ git push
 4. Click "Deploy"
 
 ### 3. Database Setup (After Deployment)
-Once deployed, you need to run the database migrations and seed:
+Once deployed, you need to run the database migrations and seed manually:
 
-**Option A: Using Render Shell**
+**Using Render Shell (Required)**
 1. Go to your service dashboard on Render
 2. Click "Shell" 
-3. Run these commands:
+3. Run these commands in order:
 ```bash
-# Run database migrations
-npm run prisma:migrate
+# Generate Prisma client first
+npx prisma generate
 
-# Generate Prisma client
-npm run prisma:generate
+# Run database migrations
+npx prisma migrate deploy
 
 # Seed the database with test data
 npm run prisma:seed
 ```
 
-**Option B: Using Render Deploy Hooks**
-Add these to your render.yaml build command:
-```yaml
-buildCommand: npm install && npm run build && npm run prisma:generate && npm run prisma:migrate && npm run prisma:seed
-```
+**Important**: The database setup must be done manually after deployment. The build process only installs dependencies and builds the application.
 
 ## Environment Variables (Auto-Configured)
 - `DATABASE_URL`: Automatically set by Render from the database

@@ -59,16 +59,30 @@ $ npm run test:cov
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Render Deployment
+1. Push your code to GitHub
+2. Connect your GitHub repository to Render at [render.com](https://render.com)
+3. Configure the following:
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm run start:prod`
+   - **Environment Variables** (see below)
+4. Add a PostgreSQL database service
+5. Deploy
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Environment Variables Required:
+- `DATABASE_URL`: PostgreSQL connection string provided by Render
+- `JWT_SECRET`: Secure random string for JWT signing
+- `JWT_EXPIRES_IN`: Token expiration time (e.g., `7d`)
+- `NODE_ENV`: `production`
 
+### Database Setup:
+After deployment, run the seed script:
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run prisma:seed
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Local Development:
+For local development, use the standard NestJS deployment documentation.
 
 ## Resources
 

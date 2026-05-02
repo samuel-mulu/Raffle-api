@@ -13,12 +13,16 @@ datasource db {
 
 enum Role {
   USER
+  CREATOR
   ADMIN
 }
 
 model User {
   id           String   @id @default(cuid())
   phone        String   @unique
+  name         String?
+  bio          String?
+  avatarUrl    String?
   role         Role     @default(USER)
   refreshToken String?
   createdAt    DateTime @default(now())
@@ -26,6 +30,7 @@ model User {
   tickets      Ticket[]
   payments     Payment[]
   auditLogs    AuditLog[]
+  campaigns    Campaign[]
 }
 
 model AuditLog {
@@ -48,10 +53,12 @@ enum CampaignStatus {
   DRAWN
   COMPLETED
   CANCELLED
+  REJECTED
 }
 
 model Campaign {
   id           String         @id @default(cuid())
+  creatorId    String?        
   title        String
   description  String?
   imageUrl     String?
@@ -65,6 +72,7 @@ model Campaign {
   tickets      Ticket[]
   payments     Payment[]
   winners      Winner[]
+  creator      User?          @relation(fields: [creatorId], references: [id])
 }
 
 enum TicketStatus {

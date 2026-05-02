@@ -7,6 +7,10 @@ import {
 } from 'class-validator';
 
 export class CreateCampaignDto {
+  @IsOptional()
+  @IsString()
+  creatorId?: string;
+
   @IsString()
   title: string;
 

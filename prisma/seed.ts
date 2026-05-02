@@ -77,12 +77,14 @@ async function createCampaign(data: {
   status: CampaignStatus;
   drawAt?: Date | null;
   liveLinks?: Prisma.InputJsonObject;
+  creatorId?: string;
 }) {
   const { liveLinks, ...campaignData } = data;
 
   return prisma.campaign.create({
     data: {
       ...campaignData,
+      creatorId: data.creatorId,
       ...(typeof liveLinks !== 'undefined' ? { liveLinks } : {}),
     },
   });
@@ -208,6 +210,10 @@ async function main() {
     createUser('+251911000002', Role.ADMIN),
   ]);
 
+  const creators = await Promise.all([
+    createUser('+251922000001', Role.CREATOR),
+  ]);
+
   const buyers = await Promise.all([
     createUser('+251911000003', Role.USER),
     createUser('+251911000004', Role.USER),
@@ -241,6 +247,7 @@ async function main() {
       liveLinks: {
         youtube: 'https://youtube.com/live/tv-demo',
       },
+      creatorId: creators[0].id,
     }),
     createCampaign({
       title: 'Luxury Apartment Raffle',
@@ -882,7 +889,7 @@ async function main() {
   console.log('');
   console.log('Suggested demo accounts:');
   console.log('- Admin login: +251911000001 / 123456');
-  console.log('- Admin login: +251911000002 / 123456');
+  console.log('- Creator login: +251922000001 / 123456');
   console.log('- Buyer with history: +251911000003 / 123456');
   console.log('- Buyer with pending items: +251911000004 / 123456');
   console.log('- Buyer with reserved tickets: +251911000005 / 123456');

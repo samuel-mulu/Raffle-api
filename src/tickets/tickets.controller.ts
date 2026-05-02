@@ -36,6 +36,12 @@ export class TicketsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('tickets/:id')
+  findOne(@CurrentUser() user: any, @Param('id') id: string) {
+    return this.tickets.findOne(id, user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('me/tickets')
   myTickets(@CurrentUser() user: any) {
     return this.tickets.myTickets(user.sub);

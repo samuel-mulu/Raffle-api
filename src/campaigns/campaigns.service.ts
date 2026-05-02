@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CampaignStatus } from '@prisma/client';
+import {
+  Campaign,
+  CampaignStatus,
+  Prisma,
+  TicketStatus,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
@@ -21,6 +26,7 @@ export class CampaignsService {
         totalTickets: dto.totalTickets,
         drawAt: dto.drawAt ? new Date(dto.drawAt) : null,
         status: CampaignStatus.DRAFT,
+        creatorId: dto.creatorId,
       },
     });
 
@@ -40,15 +46,69 @@ export class CampaignsService {
       where: {
         status: CampaignStatus.ACTIVE,
       },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            phone: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: 'desc',
       },
     });
   }
 
+  async getCampaignTicketSummary(campaignId: string) {
+    const [totalTickets, taken] = await Promise.all([
+      this.prisma.campaign.findUnique({
+        where: { id: campaignId },
+        select: { totalTickets: true },
+      }),
+      this.prisma.ticket.count({
+        where: {
+          campaignId,
+          status: { in: [TicketStatus.PAID, TicketStatus.WINNER, TicketStatus.RESERVED, TicketStatus.PAYMENT_PENDING] },
+        },
+      }),
+    ]);
+
+    const counts = await this.prisma.ticket.groupBy({
+      by: ['status'],
+      where: { campaignId },
+      _count: true,
+    });
+
+    const statusCounts = counts.reduce((acc, curr) => {
+      acc[curr.status] = curr._count;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return {
+      campaignId,
+      totalTickets: totalTickets?.totalTickets || 0,
+      taken,
+      remaining: (totalTickets?.totalTickets || 0) - taken,
+      counts: statusCounts,
+    };
+  }
+
   async findOne(id: string) {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            bio: true,
+          },
+        },
+      },
     });
 
     if (!campaign) {
@@ -60,8 +120,34 @@ export class CampaignsService {
 
   findAdminList() {
     return this.prisma.campaign.findMany({
+      include: {
+        creator: {
+          select: {
+            name: true,
+            phone: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: 'desc',
+      },
+    });
+  }
+
+  findByCreator(creatorId: string) {
+    return this.prisma.campaign.findMany({
+      where: { creatorId },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async updateLinks(id: string, links: { youtube?: string; facebook?: string }) {
+    return this.prisma.campaign.update({
+      where: { id },
+      data: {
+        liveLinks: links as any,
       },
     });
   }

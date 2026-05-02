@@ -81,6 +81,25 @@ export class TicketsService {
     }
   }
 
+  async findOne(id: string, userId: string) {
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id },
+      include: {
+        campaign: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    if (ticket.userId !== userId) {
+      throw new BadRequestException('You do not have access to this ticket');
+    }
+
+    return ticket;
+  }
+
   myTickets(userId: string) {
     return this.prisma.ticket.findMany({
       where: { userId },

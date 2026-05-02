@@ -1,0 +1,27 @@
+services:
+  # API Service
+  - type: web
+    name: raffle-api
+    runtime: node
+    buildCommand: npm install && npm run build && npm run prisma:generate
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: raffle-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+  # PostgreSQL Database
+  - type: pserv
+    name: raffle-db
+    databaseName: raffle
+    user: raffle_user
+
+# Auto-deploy configuration
+autoDeploy: true

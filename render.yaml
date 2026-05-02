@@ -3,7 +3,7 @@ services:
   - type: web
     name: raffle-api
     runtime: node
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run build && npx prisma generate
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV

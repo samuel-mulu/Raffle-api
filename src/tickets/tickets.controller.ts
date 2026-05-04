@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import type { JwtUser } from '../auth/types/jwt-user.type';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -24,26 +25,22 @@ export class TicketsController {
   @UseGuards(JwtAuthGuard)
   @Post('campaigns/:campaignId/tickets/reserve')
   reserveTicket(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtUser,
     @Param('campaignId') campaignId: string,
     @Body() dto: ReserveTicketDto,
   ) {
-    return this.tickets.reserveTicket(
-      user.sub,
-      campaignId,
-      dto.ticketNumber,
-    );
+    return this.tickets.reserveTicket(user.sub, campaignId, dto.ticketNumber);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('tickets/:id')
-  findOne(@CurrentUser() user: any, @Param('id') id: string) {
+  findOne(@CurrentUser() user: JwtUser, @Param('id') id: string) {
     return this.tickets.findOne(id, user.sub);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me/tickets')
-  myTickets(@CurrentUser() user: any) {
+  myTickets(@CurrentUser() user: JwtUser) {
     return this.tickets.myTickets(user.sub);
   }
 

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import type { JwtUser } from '../auth/types/jwt-user.type';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -18,9 +19,14 @@ export class DrawsController {
     return winners.map((w) => ({
       prizeRank: w.prizeRank,
       ticketNumber: w.ticket.ticketNumber,
-      user: w.ticket.user ? {
-        phone: w.ticket.user.phone.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2'),
-      } : null,
+      user: w.ticket.user
+        ? {
+            phone: w.ticket.user.phone.replace(
+              /(\d{3})\d{4}(\d{3})/,
+              '$1****$2',
+            ),
+          }
+        : null,
     }));
   }
 
@@ -28,7 +34,7 @@ export class DrawsController {
   @Roles(Role.ADMIN)
   @Post('admin/campaigns/:campaignId/run-draw')
   runDraw(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtUser,
     @Param('campaignId') campaignId: string,
     @Body() dto: RunDrawDto,
   ) {

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import type { JwtUser } from '../auth/types/jwt-user.type';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
@@ -14,7 +15,7 @@ export class PaymentsController {
   @UseGuards(JwtAuthGuard)
   @Post('payments/:ticketId/submit-proof')
   submitProof(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtUser,
     @Param('ticketId') ticketId: string,
     @Body() dto: SubmitPaymentProofDto,
   ) {
@@ -32,7 +33,7 @@ export class PaymentsController {
   @Roles(Role.ADMIN)
   @Post('admin/payments/:paymentId/approve')
   approvePayment(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtUser,
     @Param('paymentId') paymentId: string,
   ) {
     return this.payments.approvePayment(user.sub, paymentId);
@@ -42,7 +43,7 @@ export class PaymentsController {
   @Roles(Role.ADMIN)
   @Post('admin/payments/:paymentId/reject')
   rejectPayment(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtUser,
     @Param('paymentId') paymentId: string,
   ) {
     return this.payments.rejectPayment(user.sub, paymentId);

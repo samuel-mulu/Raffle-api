@@ -15,7 +15,11 @@ export class TicketsService {
     private audit: AuditService,
   ) {}
 
-  async reserveTicket(userId: string, campaignId: string, ticketNumber: number) {
+  async reserveTicket(
+    userId: string,
+    campaignId: string,
+    ticketNumber: number,
+  ) {
     const reservedUntil = new Date(Date.now() + 5 * 60 * 1000);
 
     try {
@@ -60,13 +64,10 @@ export class TicketsService {
         return newTicket;
       });
 
-      await this.audit.log(
-        userId,
-        'TICKET_RESERVED',
-        'Ticket',
-        ticket.id,
-        { campaignId, ticketNumber }
-      );
+      await this.audit.log(userId, 'TICKET_RESERVED', 'Ticket', ticket.id, {
+        campaignId,
+        ticketNumber,
+      });
 
       return ticket;
     } catch (error) {

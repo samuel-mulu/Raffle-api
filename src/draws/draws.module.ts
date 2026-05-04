@@ -4,6 +4,6 @@ import { DrawsController } from './draws.controller';
 
 @Module({
   providers: [DrawsService],
-  controllers: [DrawsController]
+  controllers: [DrawsController],
 })
 export class DrawsModule {}

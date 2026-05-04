@@ -16,7 +16,11 @@ export class PaymentsService {
     private audit: AuditService,
   ) {}
 
-  async submitProof(userId: string, ticketId: string, dto: SubmitPaymentProofDto) {
+  async submitProof(
+    userId: string,
+    ticketId: string,
+    dto: SubmitPaymentProofDto,
+  ) {
     const payment = await this.prisma.$transaction(async (tx) => {
       const ticket = await tx.ticket.findUnique({
         where: { id: ticketId },
@@ -59,13 +63,9 @@ export class PaymentsService {
       return newPayment;
     });
 
-    await this.audit.log(
-      userId,
-      'PAYMENT_SUBMITTED',
-      'Payment',
-      payment.id,
-      { ticketId }
-    );
+    await this.audit.log(userId, 'PAYMENT_SUBMITTED', 'Payment', payment.id, {
+      ticketId,
+    });
 
     return payment;
   }
@@ -114,13 +114,9 @@ export class PaymentsService {
       return payment;
     });
 
-    await this.audit.log(
-      adminId,
-      'PAYMENT_APPROVED',
-      'Payment',
-      result.id,
-      { ticketId: result.ticketId }
-    );
+    await this.audit.log(adminId, 'PAYMENT_APPROVED', 'Payment', result.id, {
+      ticketId: result.ticketId,
+    });
 
     return { success: true };
   }
@@ -154,13 +150,9 @@ export class PaymentsService {
       return payment;
     });
 
-    await this.audit.log(
-      adminId,
-      'PAYMENT_REJECTED',
-      'Payment',
-      result.id,
-      { ticketId: result.ticketId }
-    );
+    await this.audit.log(adminId, 'PAYMENT_REJECTED', 'Payment', result.id, {
+      ticketId: result.ticketId,
+    });
 
     return { success: true };
   }

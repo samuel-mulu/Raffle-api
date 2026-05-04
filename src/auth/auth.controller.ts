@@ -1,29 +1,34 @@
-import { Body, Controller, Get, Post, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from './jwt.guard';
+import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { RegisterBuyerDto } from './dto/register-buyer.dto';
+import type { JwtUser } from './types/jwt-user.type';
 
 @Controller('auth')
 export class AuthController {
   constructor(private auth: AuthService) {}
 
-  @Post('login')
-  async login(@Body() body: { phone: string; code: string }) {
-    // dev mode: accept only 123456
-    if (body.code !== '123456') {
-      throw new UnauthorizedException('Invalid code');
-    }
+  @Post('register')
+  async register(@Body() dto: RegisterBuyerDto) {
+    return this.auth.registerBuyer(dto);
+  }
 
-    return this.auth.login(body.phone);
+  @Post('login')
+  async login(@Body() dto: LoginDto) {
+    return this.auth.login(dto.phone, dto.code);
   }
 
   @Post('refresh')
-  async refresh(@Body() body: { userId: string; refreshToken: string }) {
-    return this.auth.refresh(body.userId, body.refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto) {
+    return this.auth.refresh(dto.userId, dto.refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@Req() req: any) {
-    return req.user;
+  getMe(@CurrentUser() user: JwtUser) {
+    return this.auth.getMe(user.sub);
   }
 }

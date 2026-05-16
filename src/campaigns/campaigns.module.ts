@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CampaignExportsService } from './campaign-exports.service';
+import { CampaignImportPreviewService } from './campaign-import-preview.service';
 import { CampaignsService } from './campaigns.service';
 import { CampaignsController } from './campaigns.controller';
 import { AdminCampaignsController } from './admin-campaigns.controller';
@@ -14,7 +15,7 @@ import { AuditModule } from '../audit/audit.module';
     AdminCampaignsController,
     CreatorCampaignsController,
   ],
-  providers: [CampaignsService, CampaignExportsService],
+  providers: [CampaignsService, CampaignExportsService, CampaignImportPreviewService],
   exports: [CampaignsService],
 })
 export class CampaignsModule {}

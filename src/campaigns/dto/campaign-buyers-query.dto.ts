@@ -1,6 +1,14 @@
 import { PaymentStatus, TicketStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CampaignBuyersQueryDto {
   @IsOptional()
@@ -27,4 +35,17 @@ export class CampaignBuyersQueryDto {
   @IsOptional()
   @IsEnum(PaymentStatus)
   paymentStatus?: PaymentStatus;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === true || value === 'true') {
+      return true;
+    }
+    if (value === false || value === 'false') {
+      return false;
+    }
+    return undefined;
+  })
+  @IsBoolean()
+  approvedOnly?: boolean;
 }

@@ -269,7 +269,11 @@ export class CampaignsService {
     query: CampaignBuyersQueryDto,
   ) {
     await this.findCreatorCampaign(creatorId, id);
-    return this.getCampaignBuyerList(id, query, false);
+    return this.getCampaignBuyerList(id, query, true);
+  }
+
+  async assertCreatorCampaign(creatorId: string, campaignId: string) {
+    await this.findCreatorCampaign(creatorId, campaignId);
   }
 
   async getAdminCampaignBuyers(id: string, query: CampaignBuyersQueryDto) {
@@ -449,6 +453,10 @@ export class CampaignsService {
 
     if (query.ticketStatus) {
       where.status = query.ticketStatus;
+    } else if (query.approvedOnly) {
+      where.status = {
+        in: [TicketStatus.PAID, TicketStatus.WINNER],
+      };
     }
 
     if (query.paymentStatus) {
@@ -572,7 +580,7 @@ export class CampaignsService {
       throw new NotFoundException('Campaign not found');
     }
 
-    const [ticketGroups, paymentGroups, expiredLogs] = await Promise.all([
+    const [ticketGroups, paymentGroups, expiredReservations] = await Promise.all([
       this.prisma.ticket.groupBy({
         by: ['status'],
         where: { campaignId },
@@ -587,10 +595,12 @@ export class CampaignsService {
         where: {
           action: 'TICKET_RESERVATION_EXPIRED',
           entity: 'Ticket',
+          metadata: {
+            path: ['campaignId'],
+            equals: campaignId,
+          },
         },
-        select: {
-          metadata: true,
-        },
+        select: { id: true },
       }),
     ]);
 
@@ -617,18 +627,6 @@ export class CampaignsService {
       paymentCounts[group.status] = group._count;
     });
 
-    const expiredReservations = expiredLogs.filter((log) => {
-      if (
-        !log.metadata ||
-        typeof log.metadata !== 'object' ||
-        Array.isArray(log.metadata)
-      ) {
-        return false;
-      }
-
-      return log.metadata.campaignId === campaignId;
-    }).length;
-
     const sold = counts[TicketStatus.PAID] + counts[TicketStatus.WINNER];
     const taken =
       sold +
@@ -645,7 +643,7 @@ export class CampaignsService {
       remaining: campaign.totalTickets - taken,
       counts,
       paymentCounts,
-      expiredReservations,
+      expiredReservations: expiredReservations.length,
     };
   }
 

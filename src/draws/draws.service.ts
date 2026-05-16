@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash, createHmac, randomBytes } from 'crypto';
 import { CampaignStatus, TicketStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -48,7 +49,12 @@ export class DrawsService {
         throw new BadRequestException('Not enough paid tickets');
       }
 
-      const selected = this.pickWinners(paidTickets, winnerCount);
+      const drawMetadata = this.buildDrawMetadata(paidTickets);
+      const selected = this.pickWinners(
+        paidTickets,
+        winnerCount,
+        drawMetadata.seed,
+      );
 
       const winners: any[] = [];
 
@@ -91,6 +97,9 @@ export class DrawsService {
             winnerCount,
             paidTicketCount: paidTickets.length,
             winningTicketNumbers: selected.map((t) => t.ticketNumber),
+            seed: drawMetadata.seed,
+            participantHash: drawMetadata.participantHash,
+            algorithm: drawMetadata.algorithm,
           },
         },
       });
@@ -99,19 +108,63 @@ export class DrawsService {
         campaignId,
         paidTicketCount: paidTickets.length,
         winners,
+        draw: {
+          seed: drawMetadata.seed,
+          participantHash: drawMetadata.participantHash,
+          algorithm: drawMetadata.algorithm,
+        },
       };
     });
   }
 
-  private pickWinners<T>(items: T[], count: number): T[] {
+  private buildDrawMetadata(
+    items: Array<{ id: string; ticketNumber: number; userId: string | null }>,
+  ) {
+    const participantHash = createHash('sha256')
+      .update(
+        JSON.stringify(
+          items.map((item) => ({
+            id: item.id,
+            ticketNumber: item.ticketNumber,
+            userId: item.userId,
+          })),
+        ),
+      )
+      .digest('hex');
+
+    return {
+      seed: randomBytes(32).toString('hex'),
+      participantHash,
+      algorithm: 'hmac-sha256-ticket-order-v1',
+    };
+  }
+
+  private pickWinners<T extends { id: string; ticketNumber: number }>(
+    items: T[],
+    count: number,
+    seed: string,
+  ): T[] {
     const copy = [...items];
 
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
+    copy.sort((a, b) => {
+      const aScore = this.drawScore(seed, a);
+      const bScore = this.drawScore(seed, b);
+      return aScore.localeCompare(bScore);
+    });
 
     return copy.slice(0, count);
+  }
+
+  private drawScore(
+    seed: string,
+    item: {
+      id: string;
+      ticketNumber: number;
+    },
+  ) {
+    return createHmac('sha256', seed)
+      .update(`${item.id}:${item.ticketNumber}`)
+      .digest('hex');
   }
 
   getWinners(campaignId: string) {

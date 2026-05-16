@@ -125,6 +125,25 @@ export class PaymentsService {
     const result = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.payment.findUnique({
         where: { id: paymentId },
+        include: {
+          ticket: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true,
+                },
+              },
+            },
+          },
+          campaign: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
       });
 
       if (!payment) throw new NotFoundException('Payment not found');
@@ -133,27 +152,46 @@ export class PaymentsService {
         throw new BadRequestException('Payment already processed');
       }
 
-      await tx.payment.update({
+      await tx.auditLog.create({
+        data: {
+          actorId: adminId,
+          action: 'PAYMENT_REJECTED',
+          entity: 'Payment',
+          entityId: payment.id,
+          metadata: {
+            paymentId: payment.id,
+            campaignId: payment.campaignId,
+            campaignTitle: payment.campaign.title,
+            ticketId: payment.ticketId,
+            ticketNumber: payment.ticket.ticketNumber,
+            buyerId: payment.userId,
+            buyerName: payment.ticket.user?.name ?? null,
+            buyerPhone: payment.ticket.user?.phone ?? null,
+            amount: payment.amount,
+            transactionId: payment.transactionId,
+            proofUrl: payment.proofUrl,
+          },
+        },
+      });
+
+      await tx.payment.delete({
         where: { id: payment.id },
-        data: {
-          status: PaymentStatus.REJECTED,
-        },
       });
 
-      await tx.ticket.update({
+      await tx.ticket.delete({
         where: { id: payment.ticketId },
-        data: {
-          status: TicketStatus.CANCELLED,
-        },
       });
 
-      return payment;
+      return {
+        id: payment.id,
+        ticketId: payment.ticketId,
+        ticketNumber: payment.ticket.ticketNumber,
+      };
     });
 
-    await this.audit.log(adminId, 'PAYMENT_REJECTED', 'Payment', result.id, {
-      ticketId: result.ticketId,
-    });
-
-    return { success: true };
+    return {
+      success: true,
+      releasedTicketNumber: result.ticketNumber,
+    };
   }
 }

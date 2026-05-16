@@ -344,6 +344,60 @@ async function main() {
       status: CampaignStatus.CANCELLED,
       drawAt: daysAgo(2),
     }),
+    createCampaign({
+      title: 'Isuzu D-Max Pickup Raffle',
+      description:
+        'A fresh vehicle raffle featuring an Isuzu D-Max pickup, ideal for testing a newly launched active car campaign with higher-value ticket sales.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=1200',
+      ticketPrice: 250,
+      totalTickets: 700,
+      status: CampaignStatus.ACTIVE,
+      drawAt: daysFromNow(18),
+      liveLinks: {
+        youtube: 'https://youtube.com/live/isuzu-dmax-raffle',
+      },
+      creatorId: creators[0].id,
+    }),
+    createCampaign({
+      title: 'PlayStation 5 Gaming Pack',
+      description:
+        'Console raffle with a PlayStation 5, extra controller, headset, and game voucher for a high-demand gaming drop.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=1200',
+      ticketPrice: 60,
+      totalTickets: 280,
+      status: CampaignStatus.ACTIVE,
+      drawAt: daysFromNow(10),
+      creatorId: creators[0].id,
+    }),
+    createCampaign({
+      title: 'Premium Sofa Living Room Set',
+      description:
+        'Furniture raffle for a complete living room upgrade with a premium sofa set and delivery-ready campaign assets.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200',
+      ticketPrice: 120,
+      totalTickets: 450,
+      status: CampaignStatus.PENDING_APPROVAL,
+      drawAt: daysFromNow(28),
+      creatorId: creators[0].id,
+    }),
+    createCampaign({
+      title: 'Smart Home Appliance Bundle',
+      description:
+        'Kitchen and home appliance package with fridge, washing machine, microwave, and blender for a broad family raffle.',
+      imageUrl:
+        'https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1200',
+      ticketPrice: 95,
+      totalTickets: 500,
+      status: CampaignStatus.ACTIVE,
+      drawAt: daysFromNow(21),
+      liveLinks: {
+        facebook: 'https://facebook.com/live/smart-home-appliances',
+      },
+      creatorId: creators[0].id,
+    }),
   ]);
 
   const [
